@@ -33,7 +33,9 @@ const STYLE_BASE = 'Genuine organic customer review photo, real phone camera loo
   'imperfect authentic framing, natural available light only (no studio, no flash, no ' +
   'artificial setup), simple plain uncluttered background with minimal props, nothing busy ' +
   'behind the subject. Integrate the teal NIBEL Zeolita Detox pouch as a real physical ' +
-  'object with correct scale, perspective and natural shadow -- never a flat sticker.';
+  'object with correct scale, perspective and natural shadow -- never a flat sticker. Keep ' +
+  'the pouch design, logo, colors and ALL printed text pixel-identical to the reference ' +
+  'image, exactly as written -- do not redesign, reword, blur or invent any label text.';
 
 const FAMILIA_EXTRA = 'Selfie angle, focus entirely on the mom and her kids and their real ' +
   'expressions, plain simple background kept out of focus, product held naturally in hand.';
