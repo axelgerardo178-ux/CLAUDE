@@ -26,104 +26,87 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-const STYLE_BASE = 'Captured with iPhone 17 Pro camera quality (smartphone sensor look, ' +
-  'computational photography, natural color science). Hyperrealistic, natural skin texture ' +
-  'with visible pores, fine lines and asymmetries (no beauty retouching, no skin smoothing). ' +
-  'Background in sharp focus (no bokeh, no shallow depth of field). Natural available lighting, ' +
-  'no studio setup, no cinematic color grading. UGC aesthetic. The product (a teal stand-up ' +
-  'pouch labeled "NIBEL ZEOLITA DETOX PARA NINOS", "9 EN 1 SUPLEMENTO", "OMEGA-3 Y MAGNESIO ' +
-  'EXTRA FUERZA", "60 GOMITAS SABOR FRUTOS ROJOS", "HECHO EN MEXICO") must be seamlessly ' +
-  'integrated into the scene as a physical 3D object with correct perspective, scale, ambient ' +
-  'lighting match, and realistic cast shadows. It must look physically present in the ' +
-  'environment -- NEVER as a flat 2D sticker, pasted cutout, or floating render. IMPORTANT: ' +
-  'do NOT include any phone, iPhone, or camera device in the frame -- this describes the ' +
-  'capture style only.';
+// NOTA: el modelo qwen/image-to-image devuelve "Internal Error" con prompts
+// mayores a ~800 caracteres. Mantener STYLE_BASE + texto de cada shot corto.
+const STYLE_BASE = 'Captured with iPhone 17 Pro quality: natural smartphone photo, ' +
+  'hyperrealistic, natural skin texture, no retouching, sharp background in focus, natural ' +
+  'lighting, UGC style, no phone visible in frame. Integrate the teal NIBEL Zeolita Detox ' +
+  'pouch as a real 3D object with correct perspective, scale, lighting and shadows -- never ' +
+  'a flat sticker or cutout.';
 
 const shots = [
   // 3 selfies familiares (mama con hijos pequenos)
   {
     name: 'familia-selfie-01-cocina',
-    prompt: `${STYLE_BASE} Selfie casera de una mama sonriente con sus dos hijos pequenos ` +
-      'en la cocina de casa, ella sostiene la bolsa del producto Nibel a la altura del pecho ' +
-      'mostrandola a camara, los ninos sonrien curiosos mirando el producto, luz natural de ' +
-      'ventana, angulo selfie ligeramente desde arriba, ambiente hogareno real (mesa con ' +
-      'trastes, refrigerador de fondo).',
+    prompt: `${STYLE_BASE} Selfie casera en la cocina: mama sonriente con sus dos hijos ` +
+      'pequenos, ella sostiene la bolsa del producto mostrandola a camara, ninos curiosos, ' +
+      'luz natural de ventana, ambiente hogareno.',
   },
   {
     name: 'familia-selfie-02-sala',
-    prompt: `${STYLE_BASE} Selfie casera en la sala de casa, una mama abraza a su hijo ` +
-      'pequeno sentados en el sofa, el nino sostiene la bolsa del producto Nibel con ambas ' +
-      'manos mostrandola sonriente, la mama sonrie mirando a camara, luz de tarde entrando ' +
-      'por la ventana, sofa y cojines de fondo, ambiente relajado de fin de semana.',
+    prompt: `${STYLE_BASE} Selfie casera en la sala: mama abraza a su hijo pequeno en el ` +
+      'sofa, el nino sostiene la bolsa del producto sonriendo a camara, luz de tarde, ' +
+      'ambiente relajado de fin de semana.',
   },
   {
     name: 'familia-selfie-03-desayunador',
-    prompt: `${STYLE_BASE} Selfie casera en el desayunador de la cocina por la manana, mama ` +
-      'con su hija pequena, ambas sonriendo a camara, la mama sostiene la bolsa del producto ' +
-      'Nibel junto a un vaso de agua y una gomita en la mano de la nina, luz natural matutina, ' +
-      'ambiente calido y autentico de rutina familiar.',
+    prompt: `${STYLE_BASE} Selfie casera en el desayunador por la manana: mama con su hija ` +
+      'pequena sonriendo a camara, sostiene la bolsa del producto junto a un vaso de agua, ' +
+      'luz natural matutina.',
   },
 
   // 10 fotos de producto solamente
   {
     name: 'producto-01-frente-fondo-blanco',
-    prompt: `${STYLE_BASE} Fotografia de producto sobre superficie blanca lisa, la bolsa de ` +
-      'pie centrada de frente, luz suave y uniforme, sombra de contacto suave y realista, ' +
-      'composicion tipo catalogo de e-commerce.',
+    prompt: `${STYLE_BASE} Fotografia de producto sobre superficie blanca lisa, la bolsa ` +
+      'de pie centrada de frente, luz suave uniforme, sombra de contacto realista, estilo ' +
+      'catalogo e-commerce.',
   },
   {
     name: 'producto-02-angulo-3-4',
     prompt: `${STYLE_BASE} Fotografia de producto en angulo de tres cuartos sobre mesa de ` +
-      'madera clara, luz natural lateral suave, ligera sombra proyectada, fondo desenfocado ' +
-      'minimalista de cocina.',
+      'madera clara, luz natural lateral suave, fondo desenfocado de cocina.',
   },
   {
     name: 'producto-03-con-gomitas-esparcidas',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre mesa de madera con varias ` +
-      'gomitas de colores (rojo, naranja, amarillo) esparcidas alrededor de la base de la ' +
-      'bolsa, luz natural de dia, composicion cercana estilo flat lay ligeramente angulado.',
+    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre mesa de madera con gomitas ` +
+      'de colores esparcidas alrededor de la base, luz natural de dia, estilo flat lay ' +
+      'angulado.',
   },
   {
     name: 'producto-04-mano-sosteniendo',
     prompt: `${STYLE_BASE} Fotografia de una mano de adulto sosteniendo la bolsa del ` +
-      'producto en el aire frente a un fondo de cocina desenfocado, luz natural de ventana, ' +
-      'perspectiva en primera persona.',
+      'producto frente a un fondo de cocina desenfocado, luz natural de ventana.',
   },
   {
     name: 'producto-05-fondo-cocina-desayuno',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre la barra de la cocina junto a ` +
-      'un vaso de jugo de naranja y un plato con fruta picada, luz natural matutina, ambiente ' +
-      'de desayuno familiar saludable.',
+    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre la barra de cocina junto a ` +
+      'un vaso de jugo de naranja y fruta picada, luz natural matutina.',
   },
   {
     name: 'producto-06-mochila-escolar',
     prompt: `${STYLE_BASE} Fotografia de producto apoyado junto a una mochila escolar ` +
-      'infantil de colores y una lonchera sobre una mesa, luz natural de dia, contexto de ' +
-      'rutina escolar matutina.',
+      'infantil de colores sobre una mesa, luz natural de dia, contexto escolar matutino.',
   },
   {
     name: 'producto-07-fondo-verde-plantas',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre superficie de madera con ` +
-      'plantas verdes desenfocadas de fondo, luz natural suave, composicion que transmite ' +
-      'concepto de detox y bienestar natural.',
+    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre madera con plantas verdes ` +
+      'desenfocadas de fondo, luz natural suave, concepto de detox y bienestar.',
   },
   {
     name: 'producto-08-cenital-flat-lay',
-    prompt: `${STYLE_BASE} Fotografia cenital (top-down flat lay) de la bolsa del producto ` +
-      'acostada sobre una superficie de madera clara junto a unas gomitas de colores y una ' +
-      'cuchara de madera, luz natural uniforme, composicion ordenada estilo redes sociales.',
+    prompt: `${STYLE_BASE} Fotografia cenital (top-down) de la bolsa acostada sobre madera ` +
+      'clara junto a gomitas de colores, luz natural uniforme, estilo redes sociales.',
   },
   {
     name: 'producto-09-vaso-agua',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie junto a un vaso de agua con hielo ` +
-      'sobre una mesa de cocina, gotas de condensacion visibles en el vaso, luz natural de ' +
-      'dia, composicion fresca y limpia.',
+    prompt: `${STYLE_BASE} Fotografia de producto de pie junto a un vaso de agua con ` +
+      'hielo sobre mesa de cocina, luz natural de dia, composicion fresca.',
   },
   {
     name: 'producto-10-detalle-etiqueta',
-    prompt: `${STYLE_BASE} Fotografia de producto en primer plano medio, enfocando la ` +
-      'etiqueta frontal con detalle nitido de textura del empaque metalico, ligero angulo ' +
-      'lateral, luz suave que resalta el brillo del material, fondo neutro desenfocado.',
+    prompt: `${STYLE_BASE} Fotografia de producto en primer plano, enfocando la etiqueta ` +
+      'frontal con detalle nitido del empaque, angulo lateral, luz suave, fondo desenfocado.',
   },
 ];
 
