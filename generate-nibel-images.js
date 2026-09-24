@@ -9,7 +9,7 @@ const API_KEY = process.env.KIE_AI_API_KEY;
 // Modelo de imagen-a-imagen usado para componer el producto en la escena.
 // Verifica el slug exacto en https://docs.kie.ai/ (seccion "Models") si Kie AI
 // cambia sus nombres; puedes sobreescribirlo con KIE_AI_MODEL en .env.
-const MODEL = process.env.KIE_AI_MODEL || 'qwen/image-to-image';
+const MODEL = process.env.KIE_AI_MODEL || 'nano-banana-2';
 
 const REFERENCE_IMAGE = process.env.REFERENCE_IMAGE_PATH ||
   '/tmp/claude-0/-home-user-CLAUDE/7cefee55-f5f2-5e8d-8d52-936457d5501a/images/1.webp';
@@ -26,87 +26,91 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// NOTA: el modelo qwen/image-to-image devuelve "Internal Error" con prompts
-// mayores a ~800 caracteres. Mantener STYLE_BASE + texto de cada shot corto.
-const STYLE_BASE = 'Captured with iPhone 17 Pro quality: natural smartphone photo, ' +
-  'hyperrealistic, natural skin texture, no retouching, sharp background in focus, natural ' +
-  'lighting, UGC style, no phone visible in frame. Integrate the teal NIBEL Zeolita Detox ' +
-  'pouch as a real 3D object with correct perspective, scale, lighting and shadows -- never ' +
-  'a flat sticker or cutout.';
+// Estilo "full organico" tipo resena de cliente real: nada de fondos cargados
+// ni props de mas, luz natural imperfecta, foco total en el producto (o en la
+// familia en las selfies).
+const STYLE_BASE = 'Genuine organic customer review photo, real phone camera look, ' +
+  'imperfect authentic framing, natural available light only (no studio, no flash, no ' +
+  'artificial setup), simple plain uncluttered background with minimal props, nothing busy ' +
+  'behind the subject. Integrate the teal NIBEL Zeolita Detox pouch as a real physical ' +
+  'object with correct scale, perspective and natural shadow -- never a flat sticker.';
+
+const FAMILIA_EXTRA = 'Selfie angle, focus entirely on the mom and her kids and their real ' +
+  'expressions, plain simple background kept out of focus, product held naturally in hand.';
+
+const PRODUCTO_EXTRA = 'Product-only shot, full focus on the pouch, plain simple ' +
+  'background (bare table, counter or neutral surface), no extra objects or clutter.';
 
 const shots = [
-  // 3 selfies familiares (mama con hijos pequenos)
+  // 3 selfies familiares (mama con hijos pequenos), foco en la familia
   {
     name: 'familia-selfie-01-cocina',
-    prompt: `${STYLE_BASE} Selfie casera en la cocina: mama sonriente con sus dos hijos ` +
-      'pequenos, ella sostiene la bolsa del producto mostrandola a camara, ninos curiosos, ' +
-      'luz natural de ventana, ambiente hogareno.',
+    prompt: `${STYLE_BASE} ${FAMILIA_EXTRA} Mama sonriente con sus dos hijos pequenos en ` +
+      'casa, ella sostiene la bolsa del producto mostrandola a camara, ninos curiosos y ' +
+      'felices, luz natural de dia.',
   },
   {
     name: 'familia-selfie-02-sala',
-    prompt: `${STYLE_BASE} Selfie casera en la sala: mama abraza a su hijo pequeno en el ` +
-      'sofa, el nino sostiene la bolsa del producto sonriendo a camara, luz de tarde, ' +
-      'ambiente relajado de fin de semana.',
+    prompt: `${STYLE_BASE} ${FAMILIA_EXTRA} Mama abraza a su hijo pequeno, el nino sostiene ` +
+      'la bolsa del producto sonriendo a camara, ambiente relajado y casero, luz natural.',
   },
   {
     name: 'familia-selfie-03-desayunador',
-    prompt: `${STYLE_BASE} Selfie casera en el desayunador por la manana: mama con su hija ` +
-      'pequena sonriendo a camara, sostiene la bolsa del producto junto a un vaso de agua, ' +
-      'luz natural matutina.',
+    prompt: `${STYLE_BASE} ${FAMILIA_EXTRA} Mama con su hija pequena sonriendo a camara, ` +
+      'sostiene la bolsa del producto cerca de su hija, momento genuino de manana, luz ' +
+      'natural suave.',
   },
 
-  // 10 fotos de producto solamente
+  // 10 fotos de producto solamente, foco total en el producto
   {
     name: 'producto-01-frente-fondo-blanco',
-    prompt: `${STYLE_BASE} Fotografia de producto sobre superficie blanca lisa, la bolsa ` +
-      'de pie centrada de frente, luz suave uniforme, sombra de contacto realista, estilo ' +
-      'catalogo e-commerce.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie centrada de frente sobre ` +
+      'superficie blanca lisa, luz natural suave.',
   },
   {
     name: 'producto-02-angulo-3-4',
-    prompt: `${STYLE_BASE} Fotografia de producto en angulo de tres cuartos sobre mesa de ` +
-      'madera clara, luz natural lateral suave, fondo desenfocado de cocina.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa en angulo de tres cuartos sobre mesa ` +
+      'de madera clara, luz natural lateral.',
   },
   {
-    name: 'producto-03-con-gomitas-esparcidas',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre mesa de madera con gomitas ` +
-      'de colores esparcidas alrededor de la base, luz natural de dia, estilo flat lay ' +
-      'angulado.',
+    name: 'producto-03-con-gomitas',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie con solo un par de gomitas de ` +
+      'colores junto a la base, luz natural de dia.',
   },
   {
     name: 'producto-04-mano-sosteniendo',
-    prompt: `${STYLE_BASE} Fotografia de una mano de adulto sosteniendo la bolsa del ` +
-      'producto frente a un fondo de cocina desenfocado, luz natural de ventana.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} Una mano de adulto sosteniendo la bolsa en el ` +
+      'aire, fondo neutro desenfocado, luz natural de ventana.',
   },
   {
-    name: 'producto-05-fondo-cocina-desayuno',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre la barra de cocina junto a ` +
-      'un vaso de jugo de naranja y fruta picada, luz natural matutina.',
+    name: 'producto-05-mostrador-cocina',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie sobre un mostrador de cocina ` +
+      'liso, luz natural matutina.',
   },
   {
-    name: 'producto-06-mochila-escolar',
-    prompt: `${STYLE_BASE} Fotografia de producto apoyado junto a una mochila escolar ` +
-      'infantil de colores sobre una mesa, luz natural de dia, contexto escolar matutino.',
+    name: 'producto-06-mesa-madera',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie sobre una mesa de madera ` +
+      'simple, luz natural calida de tarde.',
   },
   {
-    name: 'producto-07-fondo-verde-plantas',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie sobre madera con plantas verdes ` +
-      'desenfocadas de fondo, luz natural suave, concepto de detox y bienestar.',
+    name: 'producto-07-fondo-neutro',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie contra una pared lisa de tono ` +
+      'neutro, luz natural suave y difusa.',
   },
   {
     name: 'producto-08-cenital-flat-lay',
-    prompt: `${STYLE_BASE} Fotografia cenital (top-down) de la bolsa acostada sobre madera ` +
-      'clara junto a gomitas de colores, luz natural uniforme, estilo redes sociales.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} Fotografia cenital (top-down) de la bolsa ` +
+      'acostada sobre una superficie simple, luz natural uniforme.',
   },
   {
     name: 'producto-09-vaso-agua',
-    prompt: `${STYLE_BASE} Fotografia de producto de pie junto a un vaso de agua con ` +
-      'hielo sobre mesa de cocina, luz natural de dia, composicion fresca.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} La bolsa de pie junto a un solo vaso de agua ` +
+      'simple, sin nada mas alrededor, luz natural de dia.',
   },
   {
     name: 'producto-10-detalle-etiqueta',
-    prompt: `${STYLE_BASE} Fotografia de producto en primer plano, enfocando la etiqueta ` +
-      'frontal con detalle nitido del empaque, angulo lateral, luz suave, fondo desenfocado.',
+    prompt: `${STYLE_BASE} ${PRODUCTO_EXTRA} Primer plano de la etiqueta frontal, detalle ` +
+      'nitido del empaque, fondo neutro desenfocado, luz natural suave.',
   },
 ];
 
@@ -139,7 +143,7 @@ async function createTask(prompt, referenceUrl) {
       model: MODEL,
       input: {
         prompt,
-        image_url: referenceUrl,
+        image_urls: [referenceUrl],
       },
     }),
   });
