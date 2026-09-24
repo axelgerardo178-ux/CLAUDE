@@ -156,7 +156,7 @@ async function createTask(prompt, referenceUrl) {
       model: MODEL,
       input: {
         prompt,
-        image_urls: [referenceUrl],
+        image_url: referenceUrl,
       },
     }),
   });
