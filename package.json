@@ -1,0 +1,13 @@
+{
+  "name": "kie-ai-image-generator",
+  "version": "1.0.0",
+  "description": "Cliente Node.js para generar imagenes con la API de Kie AI",
+  "type": "module",
+  "main": "generate-image.js",
+  "scripts": {
+    "generate": "node generate-image.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
