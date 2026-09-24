@@ -7,9 +7,11 @@ const UPLOAD_BASE = 'https://kieai.redpandaai.co/api';
 const API_KEY = process.env.KIE_AI_API_KEY;
 
 // Modelo de imagen-a-imagen usado para componer el producto en la escena.
-// Verifica el slug exacto en https://docs.kie.ai/ (seccion "Models") si Kie AI
+// qwen/image-to-image preserva el texto de la etiqueta pixel-exacto (confirmado
+// en pruebas); nano-banana-2 se ve mas "organico" pero reinventa la etiqueta,
+// asi que se descarto. Verifica el slug en https://docs.kie.ai/ si Kie AI
 // cambia sus nombres; puedes sobreescribirlo con KIE_AI_MODEL en .env.
-const MODEL = process.env.KIE_AI_MODEL || 'nano-banana-2';
+const MODEL = process.env.KIE_AI_MODEL || 'qwen/image-to-image';
 
 const REFERENCE_IMAGE = process.env.REFERENCE_IMAGE_PATH ||
   '/tmp/claude-0/-home-user-CLAUDE/7cefee55-f5f2-5e8d-8d52-936457d5501a/images/1.webp';
@@ -29,19 +31,18 @@ const headers = {
 // Estilo "full organico" tipo resena de cliente real: nada de fondos cargados
 // ni props de mas, luz natural imperfecta, foco total en el producto (o en la
 // familia en las selfies).
-const STYLE_BASE = 'Genuine organic customer review photo, real phone camera look, ' +
-  'imperfect authentic framing, natural available light only (no studio, no flash, no ' +
-  'artificial setup), simple plain uncluttered background with minimal props, nothing busy ' +
-  'behind the subject. Integrate the teal NIBEL Zeolita Detox pouch as a real physical ' +
-  'object with correct scale, perspective and natural shadow -- never a flat sticker. Keep ' +
-  'the pouch design, logo, colors and ALL printed text pixel-identical to the reference ' +
-  'image, exactly as written -- do not redesign, reword, blur or invent any label text.';
+// NOTA: qwen/image-to-image devuelve "Internal Error" con prompts mayores a
+// ~800 caracteres, por eso STYLE_BASE + extras + shot se mantienen cortos.
+const STYLE_BASE = 'Genuine organic customer review photo, real phone camera, natural ' +
+  'light only, no studio. Simple plain background, minimal props. Keep the pouch design, ' +
+  'logo, colors and all printed text pixel-identical to the reference image, exactly as ' +
+  'written -- do not redesign or invent label text.';
 
-const FAMILIA_EXTRA = 'Selfie angle, focus entirely on the mom and her kids and their real ' +
-  'expressions, plain simple background kept out of focus, product held naturally in hand.';
+const FAMILIA_EXTRA = 'Selfie angle, focus on mom and her kids real expressions, ' +
+  'background simple and out of focus, product held naturally.';
 
-const PRODUCTO_EXTRA = 'Product-only shot, full focus on the pouch, plain simple ' +
-  'background (bare table, counter or neutral surface), no extra objects or clutter.';
+const PRODUCTO_EXTRA = 'Product-only shot, full focus on the pouch, plain bare ' +
+  'surface, no clutter.';
 
 const shots = [
   // 3 selfies familiares (mama con hijos pequenos), foco en la familia
@@ -145,7 +146,7 @@ async function createTask(prompt, referenceUrl) {
       model: MODEL,
       input: {
         prompt,
-        image_urls: [referenceUrl],
+        image_url: referenceUrl,
       },
     }),
   });
