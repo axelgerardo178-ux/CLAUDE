@@ -2,7 +2,7 @@
 
 Uso:
   python3 componer-texto-escena.py ref01 marca/tof-ref01-escena.png salida.png [--corners x1,y1,x2,y2,x3,y3,x4,y4]
-                                   [--blur 0.8] [--debug debug.png]
+                                   [--blur 0.8] [--blur-ramp x0,y0,x1,y1,s1] [--debug debug.png]
 
 Las esquinas van en orden: arriba-izq, arriba-der, abajo-der, abajo-izq DE LA HOJA
 (según cómo se lee el texto, no según la imagen). Sin --corners intenta detectar el
@@ -30,87 +30,91 @@ def font(size, bold=False):
 
 # ---------- layouts planos (RGBA, fondo transparente) ----------
 
+def illegible_lines(d, rng, x0, y, x1, n, fill, h=14, gap=38, bullet=None):
+    """Renglones de texto ilegible (bloques redondeados), como letra chica desenfocada."""
+    for _ in range(n):
+        x = x0
+        if bullet:
+            d.ellipse((x0, y, x0 + 12, y + 12), fill=bullet)
+            x = x0 + 30
+        lim = x1 - int(rng.integers(0, 220))
+        while True:
+            ww = int(rng.integers(25, 120))
+            if x + ww > lim:
+                break
+            d.rounded_rectangle((x, y, x + ww, y + h), h // 2, fill=fill)
+            x += ww + 12
+        y += gap
+    return y
+
+
 def layout_ref01():
-    """Hoja de resultados tamaño carta: 'Resultado: pre diabetes'."""
+    """Hoja de resultados tamaño carta: 'Resultado: pre diabetes'.
+
+    Acomodada a la foto de ref-01: la esquina superior derecha sale de cuadro, el
+    pulgar tapa el margen izquierdo entre y≈720 y y≈1000 y la mitad de abajo se
+    curva hacia la cámara. Por eso todo lo legible va arriba (y < 700) y abajo
+    solo quedan renglones ilegibles.
+    """
     W, H = 1275, 1650  # carta a 150 dpi
     img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     ink = (38, 38, 42, 255)
-    gray = (120, 120, 126, 255)
-    light = (175, 175, 180, 255)
+    gray = (125, 125, 130, 255)
+    light = (206, 206, 210, 255)
     red = (150, 22, 28, 255)
-    m = 110
+    m = 130
+    rng = np.random.default_rng(7)
 
     # encabezado de laboratorio genérico
-    d.text((m, 80), 'LABORATORIO CLÍNICO', font=font(30, True), fill=gray)
-    d.text((m, 120), 'Reporte de resultados', font=font(24), fill=light)
-    d.text((W - m, 80), 'Folio 0048217', font=font(24), fill=light, anchor='ra')
-    d.text((W - m, 115), 'Fecha 12/09/2026', font=font(24), fill=light, anchor='ra')
-    d.line((m, 170, W - m, 170), fill=light, width=3)
+    d.text((m, 78), 'LABORATORIO CLÍNICO', font=font(28, True), fill=gray)
+    d.text((m, 114), 'Reporte de resultados', font=font(22), fill=light)
+    d.line((m, 158, W - m, 158), fill=light, width=3)
 
     # titular en rojo oscuro
-    d.text((m, 225), 'Resultado: pre diabetes', font=font(84, True), fill=red)
+    d.text((m, 222), 'Resultado: pre diabetes', font=font(68, True), fill=red)
 
     # indicaciones subrayadas
-    y = 370
+    y = 330
     t = 'Indicaciones: cuidar alimentación'
-    f = font(46, True)
+    f = font(42, True)
     d.text((m, y), t, font=f, fill=ink)
     w = d.textlength(t, font=f)
-    d.line((m, y + 58, m + w, y + 58), fill=ink, width=4)
-
-    # renglones ilegibles bajo indicaciones
-    rng = np.random.default_rng(7)
-    y = 470
-    for _ in range(3):
-        x = m + 30
-        d.ellipse((m, y + 6, m + 12, y + 18), fill=gray)
-        for _ in range(rng.integers(6, 10)):
-            ww = int(rng.integers(40, 130))
-            if x + ww > W - m:
-                break
-            d.rounded_rectangle((x, y + 6, x + ww, y + 18), 6, fill=light)
-            x += ww + 16
-        y += 48
+    d.line((m, y + 54, m + w, y + 54), fill=ink, width=4)
 
     # tabla "Tus resultados"
-    y = 660
+    y = 425
     d.text((m, y), 'Tus resultados', font=font(40, True), fill=ink)
-    y += 70
+    y += 58
     cols = [m, m + 520, m + 800]
-    hf = font(28, True)
+    hf = font(27, True)
     for c, h in zip(cols, ['Estudio', 'Resultado', 'Referencia']):
         d.text((c, y), h, font=hf, fill=gray)
-    y += 48
+    y += 38
     d.line((m, y, W - m, y), fill=light, width=2)
-    rf = font(32)
-    rfb = font(32, True)
+    rf = font(38)
+    rfb = font(42, True)
     rows = [('Glucosa en ayunas', '108 mg/dL', '70 – 99'),
             ('Hemoglobina glucosilada', '6.0 %', '< 5.7')]
     for est, res, ref in rows:
-        y += 22
+        y += 12
         d.text((cols[0], y), est, font=rf, fill=ink)
         d.text((cols[1], y), res, font=rfb, fill=red)
         d.text((cols[2], y), ref, font=rf, fill=ink)
-        y += 52
+        y += 56
         d.line((m, y, W - m, y), fill=light, width=2)
 
-    # bloques de texto ilegible más abajo (como en la referencia)
-    y += 90
-    for block in range(3):
-        d.rounded_rectangle((m, y, m + 240, y + 20), 8, fill=gray)
-        y += 50
-        for _ in range(int(rng.integers(2, 4))):
-            x = m
-            lim = W - m - int(rng.integers(0, 260))
-            while True:
-                ww = int(rng.integers(40, 150))
-                if x + ww > lim:
-                    break
-                d.rounded_rectangle((x, y, x + ww, y + 14), 6, fill=light)
-                x += ww + 14
-            y += 38
-        y += 40
+    # texto ilegible más abajo (como en la referencia)
+    y = 750
+    d.rounded_rectangle((m, y, m + 200, y + 12), 6, fill=gray)
+    y = illegible_lines(d, rng, m, y + 36, W - m, 5, light, h=7, gap=27)
+    y += 34
+    d.rounded_rectangle((m, y, m + 240, y + 12), 6, fill=gray)
+    y = illegible_lines(d, rng, m, y + 36, W - m, 6, light, h=7, gap=27)
+    y += 34
+    d.rounded_rectangle((m, y, m + 180, y + 12), 6, fill=gray)
+    illegible_lines(d, rng, m, y + 36, W - m, 4, light, h=7, gap=27)
+    illegible_lines(d, rng, m, H - 150, W - m - 300, 2, light, h=7, gap=22)
     return img
 
 
@@ -148,7 +152,35 @@ def detect_sheet(bgr):
 
 # ---------- composición ----------
 
-def compose(scene_path, out_path, layout, corners, blur, debug_path=None):
+def blur_map(H, W, s0, ramp):
+    """Sigma por píxel: s0 en (x0,y0) y s1 en (x1,y1), lineal entre ambos (profundidad de campo)."""
+    if not ramp:
+        return np.full((H, W), s0, np.float32)
+    x0, y0, x1, y1, s1 = ramp
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    dx, dy = x1 - x0, y1 - y0
+    t = np.clip(((xx - x0) * dx + (yy - y0) * dy) / (dx * dx + dy * dy), 0, 1)
+    return s0 + (s1 - s0) * t
+
+
+def varying_blur(img, sig):
+    """Desenfoque gaussiano con sigma variable: interpola entre varios niveles."""
+    levels = np.linspace(sig.min(), sig.max(), 6) if sig.max() > sig.min() else [sig.min()]
+    stack = [cv2.GaussianBlur(img, (0, 0), float(l)) if l > 0 else img for l in levels]
+    if len(stack) == 1:
+        return stack[0]
+    pos = (sig - levels[0]) / (levels[1] - levels[0])
+    i0 = np.clip(np.floor(pos).astype(int), 0, len(levels) - 2)
+    f = pos - i0
+    st = np.stack(stack)
+    rows, cols = np.indices(sig.shape)
+    lo, hi = st[i0, rows, cols], st[i0 + 1, rows, cols]
+    if img.ndim == 3:
+        f = f[..., None]
+    return lo * (1 - f) + hi * f
+
+
+def compose(scene_path, out_path, layout, corners, blur, debug_path=None, ramp=None):
     bgr = cv2.imread(scene_path)
     if bgr is None:
         sys.exit(f'No pude leer {scene_path}')
@@ -182,9 +214,9 @@ def compose(scene_path, out_path, layout, corners, blur, debug_path=None):
     paper_col = cv2.GaussianBlur(scene, (0, 0), 4)
     inked = paper_col * ink
     a = a * paper
-    if blur > 0:
-        a = cv2.GaussianBlur(a, (0, 0), blur)
-        inked = cv2.GaussianBlur(inked, (0, 0), blur)
+    sig = blur_map(H, W, blur, ramp)
+    a = varying_blur(a, sig)
+    inked = varying_blur(inked, sig)
     a = (a * 0.93)[..., None]  # tinta de impresora, nunca 100 % opaca
     out = scene * (1 - a) + inked * a
 
@@ -210,6 +242,7 @@ def main():
     ap.add_argument('out')
     ap.add_argument('--corners')
     ap.add_argument('--blur', type=float, default=0.8)
+    ap.add_argument('--blur-ramp', help='x0,y0,x1,y1,s1: el desenfoque sube de --blur en (x0,y0) a s1 en (x1,y1)')
     ap.add_argument('--debug')
     ap.add_argument('--flat', help='solo guarda el layout plano en esta ruta')
     args = ap.parse_args()
@@ -219,7 +252,8 @@ def main():
     corners = None
     if args.corners:
         corners = np.float32([float(v) for v in args.corners.split(',')]).reshape(4, 2)
-    compose(args.scene, args.out, args.layout, corners, args.blur, args.debug)
+    ramp = [float(v) for v in args.blur_ramp.split(',')] if args.blur_ramp else None
+    compose(args.scene, args.out, args.layout, corners, args.blur, args.debug, ramp)
 
 
 if __name__ == '__main__':
